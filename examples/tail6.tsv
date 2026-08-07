@@ -1,0 +1,33 @@
+# Build 6 -- half-width SANDWICHED, with original text on BOTH sides.
+#
+# Build 5 overturned the previous conclusion: "ENGLISH TAIL" rendered on
+# screen, in a dialogue block, at correct half-width metrics. Dialogue does
+# NOT reject half-width. What it does is re-wrap and truncate around it.
+#
+# Build 5 in detail:
+#   AROUND  line1 = 6 JP + 7 EN, line2 = 9 JP (untouched)
+#           drew  row1 = 6 JP   row2 = 7 EN + the first 2 cells of line 2
+#           the last 7 cells of line 2 never appeared
+#   BARKEEP one line, 8 JP + 4 EN -> drew the 8 JP only, no second row
+#
+# So the first half-width word behaves like a line break, and everything
+# after it slides up into the next row and gets clipped at the block's line
+# count. A line that BEGINS with half-width therefore reports zero cells,
+# which is why builds 2-4 produced no window at all rather than a broken one.
+#
+# This build puts original glyphs AFTER the English too, to separate
+# "acts as a line break, rendering continues" from "stops there".
+#
+# offset  keep  text     (text no longer has to fill the line)
+#
+# BARKEEP, one line of 12 cells: 4 JP, 4 EN, 4 JP.
+#   4 JP only              -> hard stop at the half-width word
+#   4 JP + 4 EN + 4 JP     -> mid-line half-width is harmless, and the
+#                             earlier failures were about the line HEAD
+#   4 JP then a new row    -> line break, and a 1-line block clips the rest
+0x0038F4	4	Mid Eng 
+
+# AROUND: line 1 left ENTIRELY original. English goes mid-way into LINE 2
+# only. If row 1 comes out as the full 13-cell Japanese, the damage is local
+# to the line that contains half-width, which is the best case available.
+0x003864	3	Eng Here

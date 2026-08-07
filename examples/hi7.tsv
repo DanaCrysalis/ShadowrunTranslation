@@ -1,0 +1,17 @@
+# Build 7 -- the high-bit encoding, no engine patch.
+#
+# Every Latin byte is written as (ASCII | $80), so each pair is >= $A0A0:
+#   main CPU $1342 BMI       -> bit 15 set -> TEXT path        (was the bug)
+#   sub CPU  CMPI #$9A00/BCC -> half-width path                (unchanged)
+#   ANDI.L #$FF per byte     -> FONT86 slot (ASCII | $80)      (hifont.py)
+# and no byte can ever be $0D/$21/$23/$24/$63, so nothing is reserved.
+#
+# AROUND is the exact test that failed in build 4: English, word-for-word,
+# at the ORIGINAL 13/9 line breaks. Only the encoding differs.
+0x003848	0	Same old Silver Moon.     
+0x003864	0	Everyone's here.  
+
+# BARKEEP: 4 original Japanese, then English, then 4 original Japanese --
+# the build 6 sandwich that lost its tail. Full-width and half-width now
+# both take the main CPU's text path, so the trailing Japanese should return.
+0x0038F4	4	Mid Eng 

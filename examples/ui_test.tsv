@@ -1,0 +1,54 @@
+# ============ main menu (5 cells / 10 chars) ============
+0x33D6	LOOK
+0x33E2	TALK
+0x33EE	MOVE
+0x33FA	ITEM
+0x3406	CONTACT
+# ============ MOVE destinations (6 cells / 12 chars) ============
+0x3420	SILVER MOON
+0x342E	SCENE 1
+0x343C	SCENE 2
+0x344A	SCENE 3
+0x3458	SHIBUYA
+0x3466	SAKASHIMAYA
+0x3474	HIBUNROU
+0x3482	AKATSUKI
+0x3490	ONFALL
+0x34AC	YOKOHAMA
+0x34BA	NAT
+0x34C8	DATANET
+0x34D6	TOKADO
+0x34E4	TRIPLE Z
+0x34F2	ANGEL CLINIC
+# ============ ITEM (5 cells / 10 chars) ============
+0x3502	POCKET SEC
+# ============ CONTACT list (6 cells / 12 chars) ============
+0x3510	NAT
+0x351E	DATANET
+0x352C	TOKADO
+0x353A	TRIPLE Z
+0x3548	ANGEL CLINIC
+# ============ yes / no (3 cells / 6 chars) ============
+0x3558	YES
+0x3560	NO
+# ============ LOOK submenu (4 cells / 8 chars) ============
+0x37A8	AROUND
+0x37B2	BARKEEP
+# ============ TALK submenu (4 cells / 8 chars) ============
+0x37BE	PARTY
+0x37C8	BARKEEP
+0x37D2	HAJIME
+# ============ DATANET search list (6 cells / 12 chars) ============
+0x37DE	SLASHINGS
+0x37EC	SHIBUYA WAR
+0x37FA	END SEARCH
+# ============ prompt / choice ============
+0x380A	PLEASE SELECT
+0x381C	TELL THE TRUTH
+0x382E	SAY NOTHING
+# ============ pause menu ============
+0xD574	SAVE
+0xD57C	SPEED
+0xD586	SLOW
+0xD58C	NORM
+0xD592	FAST

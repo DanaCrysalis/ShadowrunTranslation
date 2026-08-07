@@ -1,0 +1,23 @@
+# Reflow test -- findings §11.1
+#
+# Both blocks keep their exact original WORD COUNT ($0D0A counts as a word),
+# so the file length and every offset outside the block are untouched.
+# Only the position of the newlines changes.
+#
+# T1  0x3916  was 3 lines of 10 / 5 / 11 cells (widest 11)
+#             now 3 lines of 14 /  8 /  4 cells (widest 14)
+#     Tests: can $0D0A move inside a block, and does the dialogue window
+#     grow to a width no line in the original block ever had?
+@3916
+PEACE LATELY. 14 CELLS WIDE.
+ORIG WAS 10/5/11
+REFLOW 1
+
+# T2  0x3958  was 3 lines of 10 / 8 / 7 cells
+#             now 2 lines of 13 / 13 cells
+#     Tests: can a block LOSE a line? The freed $0D0A becomes a text cell,
+#     so the word count still matches. Watch whether the main CPU's
+#     cols x lines x 64 DMA sizing keeps up when lines goes 3 -> 2.
+@3958
+THIS BLOCK LOST ONE LINE. 
+SAME WORD COUNT. REFLOW 2.
