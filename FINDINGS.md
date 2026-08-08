@@ -431,9 +431,9 @@ Of the 604 blocks that open with a `$2100` portrait word:
   script re-enters with a fresh `001D`. These blocks are **freely relocatable**
   provided their `001D` operand is updated.
 
-⚠ Residual unknown: 69 WIN-preceded blocks carry no literal `001D`. Either they
-are entered by a computed offset or through another call path. Resolve before
-bulk relocation.
+⚠ **All 263 WIN-preceded blocks are accounted for.** 194 by `001D` and 69 by a
+second entry opcode, `002C` (§7.4). Coverage is 263/263 in `ADV_01.D` and
+121/121 in `ADV_02.D`, with zero overlap between the two opcode sets.
 
 ---
 
@@ -519,18 +519,28 @@ This is what `SRUN_S.PRG` picks up as `MOVEA.L $80054,A1` (§5.4), and it
 path and of *entry seeding* (§7.4) — **not** of the walk or the dialogue
 handoff. `$34(A0)` is the menu offset field; the dialogue cursor is `$30(A0)`.
 
-### 7.4 The `001D` entry opcode ⚠ **new — resolves rev-3 §11 item 4**
+### 7.4 The `001D` and `002C` entry opcodes ⚠ **new — resolves rev-3 §11 item 4**
 
-The event bytecode in the head region (before the text region) contains a
-**`001D <16-bit offset>`** instruction: "start dialogue at offset".
+The event bytecode in the head region (before the text region) contains **two**
+"start dialogue at offset" instructions, each an opcode word followed by a
+16-bit operand: **`001D <offset>`** and **`002C <offset>`**.
 
-| File       | `001D` sites in head | Operand lands on `$2100` |
-| ---------- | -------------------- | ------------------------ |
-| `ADV_01.D` | 203                  | **203 / 203 (100%)**     |
-| `ADV_02.D` | 80                   | 79 / 80                  |
+| File       | `001D` | `002C` | Overlap | WIN-preceded blocks covered |
+| ---------- | ------ | ------ | ------- | --------------------------- |
+| `ADV_01.D` | 203    | 81     | **0**   | **263 / 263 (100%)**        |
+| `ADV_02.D` | 80     | 54     | **0**   | **121 / 121 (100%)**        |
 
-Every operand points at a `$2100` portrait word, and `target-2` is `$2323`
-(194×) or `$0D0A` (9×). Zero false positives — the opcode is a perfect filter.
+The two operand sets are disjoint — no block is entered by both.
+
+**Scan for both.** Any relocation or in-place expansion must fix up operands of
+either opcode.
+
+The blocks they enter are structurally indistinguishable — same line
+distribution (1–3 lines), same median cell count (15), same mix of terminators.
+The difference is therefore in event flow, not in box type; `002C` is somewhat
+more likely to point at a block with no portrait run (10 of 81 in `ADV_01`
+start on a `TEXT` or `$63xx` word), so **a relocation tool must copy whatever
+control run is actually present rather than assume a portrait**.
 
 ⚠ **The entry points at block start + 2**, i.e. past the `$2323`. A naive search
 for block starts finds nothing and wrongly suggests dialogue is unaddressed.
@@ -770,8 +780,16 @@ window geometry follows the main-CPU cursor rather than any stored extent.
 
 Constraints:
 
-- Only `$2323`-terminated blocks. `$2424`-chained blocks must stay contiguous
-  (§6.2).
+- ⚠ **Check what terminates the block, not just what precedes it.** An entry
+  block may itself head a `$2424` chain, in which case the *whole chain* must
+  move together, up to and including its terminating `$2323`.
+
+  | Entry terminates in | `001D` | `002C` | Relocation                |
+  | ------------------- | ------ | ------ | ------------------------- |
+  | `$2323` WIN         | 85     | 26     | single block — 111 total  |
+  | `$2424` PAGE        | 118    | 55     | whole chain — 173 total   |
+
+  Only **111 of 284** entries in `ADV_01.D` are single-block relocatable.
 - Terminate the relocated block, or the walk consumes tail zeros forever (§7.2).
 - 16 cells per line, 3–4 rows per window; paginate with `$2424` beyond that.
 - The file cannot exceed 65,536 bytes (§7.5).
@@ -834,32 +852,41 @@ character-table entries across automatically.
    global; nothing tested so far exercises those screens, and the high-bit
    rebuild displaces the katakana range as well. **The only unverified risk that
    could invalidate finished translation work.**
-2. **The 69 WIN-preceded blocks with no literal `001D`** (§6.2). Computed
-   offsets, or another call path? Must be resolved before bulk relocation.
-3. **Header entries `[0]`–`[4]`, `[6]`, `[7]`** (§7.0). Only `[5]` is
+2. **Where the event opcode dispatcher lives.** `0x123A` in `SRUN_X.P` seeds
+   the cursor and kicks the draw (§7.5), but **nothing in the supplied binaries
+   calls it** — no `bsr`/`jsr`/pointer reference in `SRUN_X.P`, `SRUN_M.PRG`,
+   `SRUN_A.P`, `COM_10.P` or `COM_20.P`. The dispatcher is in an unexamined
+   overlay, or the call is built at runtime. Until it is found, the claim that
+   `001D` and `002C` are the *only* entry opcodes rests on 100% empirical
+   coverage in two files rather than on the code.
+3. **What distinguishes `001D` from `002C`** (§7.4). Structurally identical
+   targets, so the difference is in event flow — blocking vs non-blocking,
+   auto-advance, or similar. Does not block relocation.
+4. **Header entries `[0]`–`[4]`, `[6]`, `[7]`** (§7.0). Only `[5]` is
    identified.
-4. **`$80058` → `$0141A0`** (§5.4). A main-CPU parameter the dialogue loop
+5. **`$80058` → `$0141A0`** (§5.4). A main-CPU parameter the dialogue loop
    copies before drawing. It sits adjacent to `$80054` in the mailbox and is a
    candidate wrap width.
-5. **Portrait ID → character mapping.** `$00` = Rokudou confirmed. 27 IDs
+6. **Portrait ID → character mapping.** `$00` = Rokudou confirmed. 27 IDs
    remain; `$0001`/`$0201`/`$0202`/`$0203` are probably expression or pose
    variants of the same four party members.
-6. **Which bank pairs with `BTL_*.D`.** `BMSG01.K` has 160 glyphs and
+7. **Which bank pairs with `BTL_*.D`.** `BMSG01.K` has 160 glyphs and
    `BTL_10.D` uses 146 distinct codes — a tight fit, though `BTL_10.D`'s max
    code of 713 argues against direct indexing.
-7. **Whether the loader honours the ISO extent** (§5.6). The filename table
+8. **Whether the loader honours the ISO extent** (§5.6). The filename table
    carries no size field. If loads are sized from the directory record rather
    than a hardcoded 64 KB read, the file-size cap in §7.5 may be softer than
    assumed. Untested and speculative.
-8. **`WARNING.MSG`** (65,024 B), **`TMSG01.K` / `XMSG01.K`**, **`O_ASCI.G`** —
+9. **`WARNING.MSG`** (65,024 B), **`TMSG01.K` / `XMSG01.K`**, **`O_ASCI.G`** —
    unexamined.
-9. **The `SRUN_M.PRG` `MULU #28` sites** (§2) — glyph indexing or unrelated
+10. **The `SRUN_M.PRG` `MULU #28` sites** (§2) — glyph indexing or unrelated
    record stride?
 
 **Resolved since revision 3:** ~~the `$34(A0)` text-offset source~~ (§7.3–7.5);
 ~~can `$0D0A` be moved within a block~~ (moot — but reflow *is* live, since the
 column carries into the row by design, §5.5); ~~`$63C8`/`$63F8` uncatalogued~~
-(§5.5); ~~the headerless list entry at `0x34F2`~~ (§9.6).
+(§5.5); ~~the headerless list entry at `0x34F2`~~ (§9.6); ~~the 69 WIN-preceded
+blocks with no `001D`~~ (§7.4 — they use `002C`).
 
 ---
 
